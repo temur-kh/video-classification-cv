@@ -1,4 +1,5 @@
 import os
+import random
 import tqdm
 import cv2
 import numpy as np
@@ -9,10 +10,16 @@ np.random.seed(1234)
 torch.manual_seed(1234)
 
 IMG_SIZE = 256
+FRAMES_CNT = 32
+
+
+def set_frames_cnt(frames_cnt):
+    global FRAMES_CNT
+    FRAMES_CNT = frames_cnt
 
 
 def collate_fn(batch):
-    videos = [torch.stack([img for img in item[0]]) for item in batch]
+    videos = torch.stack([img for item in batch for img in random.sample(item[0], k=FRAMES_CNT)])
     labels = [item[1] for item in batch]
     labels = torch.as_tensor(labels)
     return [videos, labels]

@@ -19,7 +19,8 @@ def parse_arguments():
     parser.add_argument("--name", "-n", help="Experiment name (for saving checkpoints and submits).",
                         default="baseline")
     parser.add_argument("--data", "-d", help="Path to dir with target images & landmarks.", default=None)
-    parser.add_argument("--batch-size", "-b", default=2, type=int)
+    parser.add_argument("--batch-size", "-b", default=16, type=int)
+    parser.add_argument("--frames-cnt", "-f", default=32, type=int)
     parser.add_argument("--epochs", "-e", default=1, type=int)
     parser.add_argument("--learning-rate", "-lr", default=1e-3, type=float)
     parser.add_argument("--gpu", action="store_true")
@@ -31,7 +32,7 @@ def train(model, loader, loss_fn, optimizer, device):
     model.train()
     train_loss = []
     for inputs, labels in tqdm.tqdm(loader, total=len(loader), desc="training...", position=0, leave=True):
-        videos = [video.to(device) for video in inputs]
+        videos = inputs.to(device)
 
         pred_labels = model(videos).cpu()
         loss = loss_fn(pred_labels, labels)
@@ -48,7 +49,7 @@ def validate(model, loader, loss_fn, device):
     model.eval()
     val_loss = []
     for inputs, labels in tqdm.tqdm(loader, total=len(loader), desc="validation...", position=0, leave=True):
-        videos = [video.to(device) for video in inputs]
+        videos = inputs.to(device)
 
         with torch.no_grad():
             pred_labels = model(videos).cpu()
@@ -64,7 +65,7 @@ def predict(model, loader, device):
     labels = np.zeros((len(loader.dataset),))
     for i, (inputs, label) in enumerate(
             tqdm.tqdm(loader, total=len(loader), desc="test prediction...", position=0, leave=True)):
-        videos = [video.to(device) for video in inputs]
+        videos = inputs.to(device)
 
         with torch.no_grad():
             pred_labels = model(videos).cpu()
@@ -85,17 +86,18 @@ def main(args):
 
     print("Creating model...")
     device = torch.device("cuda: 0") if args.gpu else torch.device("cpu")
-    model = AvgCNNModel()
+    model = AvgCNNModel(batch_size=args.batch_size, frames_cnt=args.frames_cnt)
     model.to(device)
+    set_frames_cnt(args.frames_cnt)
 
     if not args.predict:
         # 1. prepare data & models
         print("Reading data...")
         train_dataset = VideoDataset(args.data, train_transforms, split="train")
-        train_dataloader = data.DataLoader(train_dataset, batch_size=args.batch_size, num_workers=4, pin_memory=True,
+        train_dataloader = data.DataLoader(train_dataset, batch_size=args.batch_size, num_workers=1, pin_memory=True,
                                            shuffle=True, drop_last=True, collate_fn=collate_fn)
         val_dataset = VideoDataset(args.data, train_transforms, split="val")
-        val_dataloader = data.DataLoader(val_dataset, batch_size=args.batch_size, num_workers=4, pin_memory=True,
+        val_dataloader = data.DataLoader(val_dataset, batch_size=args.batch_size, num_workers=1, pin_memory=True,
                                          shuffle=False, drop_last=False, collate_fn=collate_fn)
 
         optimizer = optim.Adam(model.parameters(), lr=args.learning_rate, amsgrad=True)
@@ -117,7 +119,7 @@ def main(args):
 
     # 3. predict
     test_dataset = VideoDataset(args.data, train_transforms, split="test")
-    test_dataloader = data.DataLoader(test_dataset, batch_size=args.batch_size, num_workers=4, pin_memory=True,
+    test_dataloader = data.DataLoader(test_dataset, batch_size=args.batch_size, num_workers=1, pin_memory=True,
                                       shuffle=False, drop_last=False, collate_fn=collate_fn)
 
     with open(f"{args.name}_best.pth", "rb") as fp:
