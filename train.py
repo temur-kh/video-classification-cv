@@ -21,6 +21,7 @@ def parse_arguments():
     parser.add_argument("--data", "-d", help="Path to dir with target images & landmarks.", default=None)
     parser.add_argument("--batch-size", "-b", default=16, type=int)
     parser.add_argument("--frames-cnt", "-f", default=32, type=int)
+    parser.add_argument("--model-type", "-m", default="cnn-avg")
     parser.add_argument("--epochs", "-e", default=1, type=int)
     parser.add_argument("--learning-rate", "-lr", default=1e-3, type=float)
     parser.add_argument("--gpu", action="store_true")
@@ -86,7 +87,11 @@ def main(args):
 
     print("Creating model...")
     device = torch.device("cuda: 0") if args.gpu else torch.device("cpu")
-    model = AvgCNNModel(batch_size=args.batch_size, frames_cnt=args.frames_cnt)
+    if args.model_type == "cnn-rnn":
+        model = CNNtoRNNModel(frames_cnt=args.frames_cnt)
+    else:
+        model = AvgCNNModel(frames_cnt=args.frames_cnt)
+
     model.to(device)
     set_frames_cnt(args.frames_cnt)
 
