@@ -14,7 +14,7 @@ class AvgCNNModel(nn.Module):
 
     def forward(self, videos):
         out = self.cnn(videos).view(-1, self.output_size)
-        out = torch.mean(out.reshape(self.batch_size, self.frames_cnt, self.output_size), dim=1)
+        out = torch.mean(out.reshape(-1, self.frames_cnt, self.output_size), dim=1)
         return out
 
 
