@@ -86,7 +86,7 @@ def main(args):
     ])
 
     print("Creating model...")
-    device = torch.device("cuda: 0") if args.gpu else torch.device("cpu")
+    device = torch.device("cuda:0") if args.gpu else torch.device("cpu")
     if args.model_type == "cnn-rnn":
         model = CNNtoRNNModel(frames_cnt=args.frames_cnt)
     else:
