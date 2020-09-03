@@ -5,7 +5,7 @@ The repository builds a two approaches for video classification (or action recog
 
 ## Dataset
 
-![alt text](./fig/kayaking.gif)
+![alt text](./resources/kayaking.gif)
 
 [UCF101](http://crcv.ucf.edu/data/UCF101.php) has total 13,320 videos from 101 actions. Videos have various time lengths (frames) and different 2d image size; the shortest is 28 frames. 
 
@@ -22,7 +22,7 @@ Videos are viewed as 3d images randomly chosen from the time length and passed t
 
 The model is a pair of CNN encoder and RNN decoder (see figure below):
 
-  - **[encoder]** A [CNN](https://en.wikipedia.org/wiki/Convolutional_neural_network) function encodes (meaning compressing dimension) every 2D image **x(t)** into a 1D vector **z(t)** by <img src="./fig/f_CNN.png" width="140">
+  - **[encoder]** A [CNN](https://en.wikipedia.org/wiki/Convolutional_neural_network) function encodes (meaning compressing dimension) every 2D image **x(t)** into a 1D vector **z(t)**.
 
   - **[decoder]** A [RNN](https://en.wikipedia.org/wiki/Recurrent_neural_network) receives a sequence input vectors **z(t)** from the CNN encoder and outputs another 1D sequence **h(t)**. A final fully-connected neural net is concatenated at the end for categorical predictions. Additionally, when the model is being trained, there is a dropout layer in between the RNN and a fully-connected layer.
   - For a CNN model, we use the existing models pretrained on ImageNet.
