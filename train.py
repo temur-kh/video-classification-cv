@@ -16,16 +16,18 @@ torch.backends.cudnn.benchmark = False
 
 def parse_arguments():
     parser = ArgumentParser(__doc__)
-    parser.add_argument("--name", "-n", help="Experiment name (for saving checkpoints and submits).",
+    parser.add_argument("--name", "-n", help="Experiment name (for saving best models and prediction results).",
                         default="baseline")
-    parser.add_argument("--data", "-d", help="Path to dir with target images & landmarks.", default=None)
-    parser.add_argument("--batch-size", "-b", default=16, type=int)
-    parser.add_argument("--frames-cnt", "-f", default=16, type=int)
-    parser.add_argument("--model-type", "-m", default="cnn-avg")
-    parser.add_argument("--epochs", "-e", default=5, type=int)
-    parser.add_argument("--learning-rate", "-lr", default=1e-3, type=float)
-    parser.add_argument("--gpu", action="store_true")
-    parser.add_argument("--predict", action="store_true")
+    parser.add_argument("--data", "-d", help="Path to dir with videos folder and train/test files.", default='./data')
+    parser.add_argument("--batch-size", "-b", help="Batch size.", default=16, type=int)
+    parser.add_argument("--frames-cnt", "-f", help="Number of video frames for random selection.", default=16, type=int)
+    parser.add_argument("--model-type", "-m", help="Model to run. Two options: 'cnn-avg' or 'cnn-rnn'.",
+                        default="cnn-avg")
+    parser.add_argument("--epochs", "-e", default=5, help="Number of training epochs.", type=int)
+    parser.add_argument("--learning-rate", "-lr", default=1e-3, help="Learning rate for the optimizer.", type=float)
+    parser.add_argument("--gpu", action="store_true", help="Whether to run using GPU or not.")
+    parser.add_argument("--predict", action="store_true",
+                        help="Whether to only make predictions or to train a model, too.")
     return parser.parse_args()
 
 
