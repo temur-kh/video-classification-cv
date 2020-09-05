@@ -28,6 +28,8 @@ def parse_arguments():
     parser.add_argument("--gpu", action="store_true", help="Whether to run using GPU or not.")
     parser.add_argument("--predict", action="store_true",
                         help="Whether to only make predictions or to train a model, too.")
+    parser.add_argument("--continue-training", action="store_true",
+                        help="Whether to continue training an stored model or train a new one.")
     return parser.parse_args()
 
 
@@ -94,6 +96,11 @@ def main(args):
     else:
         model = AvgCNNModel(frames_cnt=args.frames_cnt)
 
+    if args.continue_training:
+        with open(f"{args.name}_best.pth", "rb") as fp:
+            best_state_dict = torch.load(fp, map_location="cpu")
+            model.load_state_dict(best_state_dict)
+
     model.to(device)
     set_frames_cnt(args.frames_cnt)
 
@@ -108,7 +115,7 @@ def main(args):
                                          shuffle=False, drop_last=False, collate_fn=collate_fn)
 
         optimizer = optim.Adam(model.parameters(), lr=args.learning_rate, amsgrad=True)
-        lr_scheduler = ReduceLROnPlateau(optimizer, patience=6, factor=0.3)
+        lr_scheduler = ReduceLROnPlateau(optimizer, patience=6, factor=0.3, verbose=True)
         criterion = nn.CrossEntropyLoss()
 
         # 2. train & validate
