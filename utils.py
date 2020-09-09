@@ -20,11 +20,7 @@ def set_frames_cnt(frames_cnt):
 
 
 def collate_fn(batch):
-    # for item in batch:
-    #     print(type(item[0]))
-    #     for img in random.sample(item[0], k=FRAMES_CNT):
-    #         print(img.shape)
-    videos = torch.stack([img for item in batch for img in random.sample(list(item[0]), k=FRAMES_CNT)])
+    videos = torch.stack([img for item in batch for img in random.sample(item[0], k=FRAMES_CNT)])
     labels = [item[1] for item in batch]
     labels = torch.as_tensor(labels)
     return [videos, labels]
