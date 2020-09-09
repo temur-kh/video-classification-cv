@@ -8,6 +8,7 @@ from torch.utils import data
 
 np.random.seed(1234)
 torch.manual_seed(1234)
+random.seed(1234)
 
 IMG_SIZE = 256
 FRAMES_CNT = 16
