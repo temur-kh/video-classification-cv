@@ -10,7 +10,7 @@ np.random.seed(1234)
 torch.manual_seed(1234)
 
 IMG_SIZE = 256
-FRAMES_CNT = 32
+FRAMES_CNT = 16
 
 
 def set_frames_cnt(frames_cnt):
@@ -19,7 +19,11 @@ def set_frames_cnt(frames_cnt):
 
 
 def collate_fn(batch):
-    videos = torch.stack([img for item in batch for img in random.sample(item[0], k=FRAMES_CNT)])
+    # for item in batch:
+    #     print(type(item[0]))
+    #     for img in random.sample(item[0], k=FRAMES_CNT):
+    #         print(img.shape)
+    videos = torch.stack([img for item in batch for img in random.sample(list(item[0]), k=FRAMES_CNT)])
     labels = [item[1] for item in batch]
     labels = torch.as_tensor(labels)
     return [videos, labels]
@@ -65,18 +69,24 @@ class VideoDataset(data.Dataset):
         self.transforms = transforms
 
     def __getitem__(self, idx):
-        vidcap = cv2.VideoCapture(self.video_names[idx])
-        success, image = vidcap.read()
-        count = 0
-        images = []
-        while success:
-            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-            image = self.transforms(image)
-            images.append(image)
-            success, image = vidcap.read()
-            count += 1
+        images = read_video(self.video_names[idx], self.transforms)
         label = self.labels[idx]
         return images, label
 
     def __len__(self):
         return len(self.video_names)
+
+
+def read_video(path, transforms=None):
+    vidcap = cv2.VideoCapture(path)
+    success, image = vidcap.read()
+    count = 0
+    images = []
+    while success:
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        if transforms:
+            image = transforms(image)
+        images.append(image)
+        success, image = vidcap.read()
+        count += 1
+    return images

@@ -1,9 +1,8 @@
-"""Script for baseline training. Model is ResNet18 (pretrained on ImageNet). Training takes ~ 15 mins (@ GTX 1080Ti)."""
-
 import sys
 import pandas as pd
 from argparse import ArgumentParser
 import torch.optim as optim
+import torchvision.models as models
 from torchvision import transforms
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from utils import *
@@ -21,10 +20,16 @@ def parse_arguments():
     parser.add_argument("--data", "-d", help="Path to dir with videos folder and train/test files.", default='./data')
     parser.add_argument("--batch-size", "-b", help="Batch size.", default=16, type=int)
     parser.add_argument("--frames-cnt", "-f", help="Number of video frames for random selection.", default=16, type=int)
-    parser.add_argument("--model-type", "-m", help="Model to run. Two options: 'cnn-avg' or 'cnn-rnn'.",
+    parser.add_argument("--model-type", help="Model to run. Two options: 'cnn-avg' or 'cnn-rnn'.",
                         default="cnn-avg")
+    parser.add_argument("--bilstm", action="store_true", help="Whether the LSTM is bidirectional")
+    parser.add_argument("--cnn-model", help="CNN pretrained Model to use. Two options: 'resnet18' or 'resnet34'.",
+                        default="resnet18")
     parser.add_argument("--epochs", "-e", default=5, help="Number of training epochs.", type=int)
+    parser.add_argument("--scheduler-patience", default=3, help="ReduceLROnPlateau scheduler patience.", type=int)
+    parser.add_argument("--scheduler-factor", default=0.3, help="ReduceLROnPlateau scheduler factor.", type=int)
     parser.add_argument("--learning-rate", "-lr", default=1e-3, help="Learning rate for the optimizer.", type=float)
+    parser.add_argument("--n-workers", default=4, help="Number of workers for data loaders.", type=int)
     parser.add_argument("--gpu", action="store_true", help="Whether to run using GPU or not.")
     parser.add_argument("--predict", action="store_true",
                         help="Whether to only make predictions or to train a model, too.")
@@ -91,10 +96,11 @@ def main(args):
 
     print("Creating model...")
     device = torch.device("cuda:0") if args.gpu else torch.device("cpu")
+    cnn_model = models.resnet34(pretrained=True) if args.cnn_model == "resnet34" else models.resnet18(pretrained=True)
     if args.model_type == "cnn-rnn":
-        model = CNNtoRNNModel(frames_cnt=args.frames_cnt)
+        model = CNNtoRNNModel(cnn_model, frames_cnt=args.frames_cnt, bidirectional=args.bilstm)
     else:
-        model = AvgCNNModel(frames_cnt=args.frames_cnt)
+        model = AvgCNNModel(cnn_model, frames_cnt=args.frames_cnt)
 
     if args.continue_training:
         with open(f"{args.name}_best.pth", "rb") as fp:
@@ -108,14 +114,15 @@ def main(args):
         # 1. prepare data & models
         print("Reading data...")
         train_dataset = VideoDataset(args.data, train_transforms, split="train")
-        train_dataloader = data.DataLoader(train_dataset, batch_size=args.batch_size, num_workers=1, pin_memory=True,
-                                           shuffle=True, drop_last=True, collate_fn=collate_fn)
+        train_dataloader = data.DataLoader(train_dataset, batch_size=args.batch_size, num_workers=args.n_workers,
+                                           pin_memory=True, shuffle=True, drop_last=True, collate_fn=collate_fn)
         val_dataset = VideoDataset(args.data, train_transforms, split="val")
-        val_dataloader = data.DataLoader(val_dataset, batch_size=args.batch_size, num_workers=1, pin_memory=True,
-                                         shuffle=False, drop_last=False, collate_fn=collate_fn)
+        val_dataloader = data.DataLoader(val_dataset, batch_size=args.batch_size, num_workers=args.n_workers,
+                                         pin_memory=True, shuffle=False, drop_last=False, collate_fn=collate_fn)
 
         optimizer = optim.Adam(model.parameters(), lr=args.learning_rate, amsgrad=True)
-        lr_scheduler = ReduceLROnPlateau(optimizer, patience=6, factor=0.3, verbose=True)
+        lr_scheduler = ReduceLROnPlateau(optimizer, patience=args.scheduler_patience, factor=args.scheduler_factor,
+                                         verbose=True)
         criterion = nn.CrossEntropyLoss()
 
         # 2. train & validate
@@ -133,8 +140,8 @@ def main(args):
 
     # 3. predict
     test_dataset = VideoDataset(args.data, train_transforms, split="test")
-    test_dataloader = data.DataLoader(test_dataset, batch_size=args.batch_size, num_workers=1, pin_memory=True,
-                                      shuffle=False, drop_last=False, collate_fn=collate_fn)
+    test_dataloader = data.DataLoader(test_dataset, batch_size=args.batch_size, num_workers=args.n_workers,
+                                      pin_memory=True, shuffle=False, drop_last=False, collate_fn=collate_fn)
 
     with open(f"{args.name}_best.pth", "rb") as fp:
         best_state_dict = torch.load(fp, map_location="cpu")
