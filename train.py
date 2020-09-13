@@ -35,6 +35,9 @@ def parse_arguments():
                         help="Whether to only make predictions or to train a model, too.")
     parser.add_argument("--continue-training", action="store_true",
                         help="Whether to continue training an stored model or train a new one.")
+    parser.add_argument("--in-memory", action="store_true",
+                        help="Whether to load dataset into memory at once or one-by-one")
+    parser.add_argument("--stride", default=2, help="Stripe value for data loader")
     return parser.parse_args()
 
 
@@ -79,7 +82,7 @@ def predict(model, loader, device):
 
         with torch.no_grad():
             pred_labels = model(videos).cpu()
-        prediction = pred_labels.numpy().argmax()  # B x NUM_PTS x 2
+        prediction = pred_labels.numpy().argmax(axis=1)  # B x NUM_PTS x 2
         predictions[i * loader.batch_size: (i + 1) * loader.batch_size] = prediction.reshape(-1)
         labels[i * loader.batch_size: (i + 1) * loader.batch_size] = label
     return predictions, labels
@@ -109,14 +112,18 @@ def main(args):
 
     model.to(device)
     set_frames_cnt(args.frames_cnt)
+    collate_fn = get_collate_fn(in_memory=args.in_memory)
 
     if not args.predict:
         # 1. prepare data & models
         print("Reading data...")
-        train_dataset = VideoDataset(args.data, train_transforms, split="train")
+        train_dataset = VideoDataset(args.data, train_transforms, split="train", in_memory=args.in_memory,
+                                     stride=args.stride)
         train_dataloader = data.DataLoader(train_dataset, batch_size=args.batch_size, num_workers=args.n_workers,
                                            pin_memory=True, shuffle=True, drop_last=True, collate_fn=collate_fn)
-        val_dataset = VideoDataset(args.data, train_transforms, split="val")
+
+        val_dataset = VideoDataset(args.data, train_transforms, split="val", in_memory=args.in_memory,
+                                   stride=args.stride)
         val_dataloader = data.DataLoader(val_dataset, batch_size=args.batch_size, num_workers=args.n_workers,
                                          pin_memory=True, shuffle=False, drop_last=False, collate_fn=collate_fn)
 
@@ -139,7 +146,7 @@ def main(args):
                     torch.save(model.state_dict(), fp)
 
     # 3. predict
-    test_dataset = VideoDataset(args.data, train_transforms, split="test")
+    test_dataset = VideoDataset(args.data, train_transforms, split="test", in_memory=args.in_memory, stride=args.stride)
     test_dataloader = data.DataLoader(test_dataset, batch_size=args.batch_size, num_workers=args.n_workers,
                                       pin_memory=True, shuffle=False, drop_last=False, collate_fn=collate_fn)
 
