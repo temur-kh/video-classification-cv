@@ -116,7 +116,8 @@ def read_video(path, transforms=None, in_memory=False, stride=1, frame_cnt=16):
         success, image = vidcap.read()
         count += 1
     if in_memory:
-        stride = min(int(len(images) / frame_cnt), stride)
-        starting_point = random.randint(0, len(images) - stride * frame_cnt)
-        images = images[starting_point:starting_point + stride * frame_cnt:stride]
+        samples = list(zip(range(len(images)), images))
+        images = random.sample(samples, k=frame_cnt)
+        images.sort(key=lambda x: x[0])
+        images = [image for _, image in images]
     return images
