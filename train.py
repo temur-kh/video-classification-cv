@@ -38,6 +38,8 @@ def parse_arguments():
     parser.add_argument("--in-memory", action="store_true",
                         help="Whether to load dataset into memory at once or one-by-one")
     parser.add_argument("--stride", default=2, help="Stripe value for data loader")
+    parser.add_argument("--reload-interval", default=1, type=int,
+                        help="Specifies after how many epochs the dataset should be reloaded. One - after each epoch.")
     return parser.parse_args()
 
 
@@ -88,6 +90,20 @@ def predict(model, loader, device):
     return predictions, labels
 
 
+def get_dataloaders(data_path, transformations, batch_size=16, num_workers=1, in_memory=False, stride=2):
+    collate_fn = get_collate_fn(in_memory)
+    train_dataset = VideoDataset(data_path, transformations, split="train", in_memory=in_memory,
+                                 stride=stride)
+    train_dataloader = data.DataLoader(train_dataset, batch_size=batch_size, num_workers=num_workers,
+                                       pin_memory=True, shuffle=True, drop_last=True, collate_fn=collate_fn)
+
+    val_dataset = VideoDataset(data_path, transformations, split="val", in_memory=in_memory,
+                               stride=stride)
+    val_dataloader = data.DataLoader(val_dataset, batch_size=batch_size, num_workers=num_workers,
+                                     pin_memory=True, shuffle=False, drop_last=False, collate_fn=collate_fn)
+    return train_dataloader, val_dataloader
+
+
 def main(args):
     # 1. prepare data & models
     train_transforms = transforms.Compose([
@@ -117,15 +133,9 @@ def main(args):
     if not args.predict:
         # 1. prepare data & models
         print("Reading data...")
-        train_dataset = VideoDataset(args.data, train_transforms, split="train", in_memory=args.in_memory,
-                                     stride=args.stride)
-        train_dataloader = data.DataLoader(train_dataset, batch_size=args.batch_size, num_workers=args.n_workers,
-                                           pin_memory=True, shuffle=True, drop_last=True, collate_fn=collate_fn)
-
-        val_dataset = VideoDataset(args.data, train_transforms, split="val", in_memory=args.in_memory,
-                                   stride=args.stride)
-        val_dataloader = data.DataLoader(val_dataset, batch_size=args.batch_size, num_workers=args.n_workers,
-                                         pin_memory=True, shuffle=False, drop_last=False, collate_fn=collate_fn)
+        train_dataloader, val_dataloader = get_dataloaders(args.data, train_transforms, batch_size=args.batch_size,
+                                                           num_workers=args.n_workers, in_memory=args.in_memory,
+                                                           stride=args.stride)
 
         optimizer = optim.Adam(model.parameters(), lr=args.learning_rate, amsgrad=True)
         lr_scheduler = ReduceLROnPlateau(optimizer, patience=args.scheduler_patience, factor=args.scheduler_factor,
@@ -144,6 +154,11 @@ def main(args):
                 best_val_loss = val_loss
                 with open(f"{args.name}_best.pth", "wb") as fp:
                     torch.save(model.state_dict(), fp)
+            if args.in_memory and args.reload_interval and (epoch + 1) % args.reload_interval == 0:
+                train_dataloader, val_dataloader = get_dataloaders(args.data, train_transforms,
+                                                                   batch_size=args.batch_size,
+                                                                   num_workers=args.n_workers, in_memory=args.in_memory,
+                                                                   stride=args.stride)
 
     # 3. predict
     test_dataset = VideoDataset(args.data, train_transforms, split="test", in_memory=args.in_memory, stride=args.stride)
