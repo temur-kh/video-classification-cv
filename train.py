@@ -25,11 +25,11 @@ def parse_arguments():
     parser.add_argument("--bilstm", action="store_true", help="Whether the LSTM is bidirectional")
     parser.add_argument("--cnn-model", help="CNN pretrained Model to use. Two options: 'resnet18' or 'resnet34'.",
                         default="resnet18")
-    parser.add_argument("--epochs", "-e", default=5, help="Number of training epochs.", type=int)
+    parser.add_argument("--epochs", "-e", default=40, help="Number of training epochs.", type=int)
     parser.add_argument("--scheduler-patience", default=3, help="ReduceLROnPlateau scheduler patience.", type=int)
     parser.add_argument("--scheduler-factor", default=0.3, help="ReduceLROnPlateau scheduler factor.", type=int)
     parser.add_argument("--learning-rate", "-lr", default=1e-3, help="Learning rate for the optimizer.", type=float)
-    parser.add_argument("--n-workers", default=4, help="Number of workers for data loaders.", type=int)
+    parser.add_argument("--n-workers", default=2, help="Number of workers for data loaders.", type=int)
     parser.add_argument("--gpu", action="store_true", help="Whether to run using GPU or not.")
     parser.add_argument("--predict", action="store_true",
                         help="Whether to only make predictions or to train a model, too.")
