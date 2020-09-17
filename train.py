@@ -155,6 +155,8 @@ def main(args):
                 with open(f"{args.name}_best.pth", "wb") as fp:
                     torch.save(model.state_dict(), fp)
             if args.in_memory and args.reload_interval and (epoch + 1) % args.reload_interval == 0:
+                del train_dataloader
+                del val_dataloader
                 train_dataloader, val_dataloader = get_dataloaders(args.data, train_transforms,
                                                                    batch_size=args.batch_size,
                                                                    num_workers=args.n_workers, in_memory=args.in_memory,
