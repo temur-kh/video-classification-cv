@@ -17,7 +17,7 @@ class AvgCNNModel(nn.Module):
 
 
 class CNNtoRNNModel(nn.Module):
-    def __init__(self, cnn_model, output_size=101, frames_cnt=16, drop_rate=0.3, rnn_hid_size=128, rnn_num_layers=2,
+    def __init__(self, cnn_model, output_size=101, frames_cnt=16, drop_rate=0.3, rnn_hid_size=128, rnn_num_layers=1,
                  bidirectional=False):
         super(self.__class__, self).__init__()
         self.frames_cnt = frames_cnt
