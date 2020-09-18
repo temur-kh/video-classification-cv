@@ -12,6 +12,8 @@ The repository builds a two approaches for video classification (or action recog
 You may find a Google Colab notebook with some exploratory data analysis following this link:
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1fzQNT85RXqCrQHICnMJZz3csiUAv02N_?usp=sharing)
 
+Model prediction results and examples can be found here: [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1jSh_j1X8_5Trxgx1atkkHwUDcb287NEF?usp=sharing)
+
 ## Models 
 
 ### 1. Avg CNN Model
