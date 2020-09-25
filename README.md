@@ -115,52 +115,6 @@ python predict.py --model-path [path to a model] --video-path [path to a video]
 
 For more information about arguments to pass. Refer to the `help` message:
 ```
-usage: train.py [-h] [--name NAME] [--data DATA] [--batch-size BATCH_SIZE]
-                [--frames-cnt FRAMES_CNT] [--model-type MODEL_TYPE] [--bilstm]
-                [--cnn-model CNN_MODEL] [--epochs EPOCHS]
-                [--scheduler-patience SCHEDULER_PATIENCE]
-                [--scheduler-factor SCHEDULER_FACTOR]
-                [--learning-rate LEARNING_RATE] [--n-workers N_WORKERS]
-                [--gpu] [--predict] [--continue-training] [--in-memory]
-                [--stride STRIDE] [--reload-interval RELOAD_INTERVAL]
-
-optional arguments:
-  -h, --help            show this help message and exit
-  --name NAME, -n NAME  Experiment name (for saving best models and prediction
-                        results).
-  --data DATA, -d DATA  Path to dir with videos folder and train/test files.
-  --batch-size BATCH_SIZE, -b BATCH_SIZE
-                        Batch size.
-  --frames-cnt FRAMES_CNT, -f FRAMES_CNT
-                        Number of video frames for random selection.
-  --model-type MODEL_TYPE
-                        Model to run. Two options: 'cnn-avg' or 'cnn-rnn'.
-  --bilstm              Whether the LSTM is bidirectional
-  --cnn-model CNN_MODEL
-                        CNN pretrained Model to use. Two options: 'resnet18'
-                        or 'resnet34'.
-  --epochs EPOCHS, -e EPOCHS
-                        Number of training epochs.
-  --scheduler-patience SCHEDULER_PATIENCE
-                        ReduceLROnPlateau scheduler patience.
-  --scheduler-factor SCHEDULER_FACTOR
-                        ReduceLROnPlateau scheduler factor.
-  --learning-rate LEARNING_RATE, -lr LEARNING_RATE
-                        Learning rate for the optimizer.
-  --n-workers N_WORKERS
-                        Number of workers for data loaders.
-  --gpu                 Whether to run using GPU or not.
-  --predict             Whether to only make predictions or to train a model,
-                        too.
-  --continue-training   Whether to continue training an stored model or train
-                        a new one.
-  --in-memory           Whether to load dataset into memory at once or one-by-
-                        one
-  --stride STRIDE       Stripe value for data loader
-  --reload-interval RELOAD_INTERVAL
-                        Specifies after how many epochs the dataset should be
-                        reloaded. One - after each epoch.
-(venv) temur@temur-TM1701:~/Documents/Fall2020/CV/video-classification-cv$ python predict.py --help
 usage: predict.py [-h] [--model-path MODEL_PATH] [--video-path VIDEO_PATH]
                   [--frames-cnt FRAMES_CNT] [--model-type MODEL_TYPE]
                   [--bilstm] [--cnn-model CNN_MODEL] [--gpu]
